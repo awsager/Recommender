@@ -66,6 +66,7 @@ def get_list_jaccard(data_list):
 def minhash(the_list, permutation_list, num_rows):
 	num_people = len(the_list)
 	num_perms = len(permutation_list)
+	permutation_length = len(permutation_list[0])
 	
 	# Since we are using permutations to approximate our characteristic matrix 
 	# we can use a matrix instead of lists
@@ -73,13 +74,13 @@ def minhash(the_list, permutation_list, num_rows):
 	signature_matrix.fill(num_rows + 1)
 	
 	# Compare the lists
-	for i in range(num_people):
+	for i in range(num_people): # cycle thru sets
 		ratings = the_list[i]
-		count = 0
-		for j in ratings:
-			k = permutation_list[count]
-			if j > num_perms:
-				break
-			signature_matrix[count, i] = k[count]
-			count += 1
+		for j in range(num_perms): # cycle thru permutations to generate minhash
+			permutation = permutation_list[j]
+			for number in permutation:
+				if number in ratings:
+					# assign to matrix
+					signature_matrix[j][i] = min(signature_matrix[j][i], number)
+					break
 	return signature_matrix	
