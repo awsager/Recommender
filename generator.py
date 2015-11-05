@@ -1,6 +1,10 @@
 import numpy as np
 import random
 
+# File contains methods to produce sets which contain randomly generator values
+# within another set. This simulates a population of users and their
+# preferences (randomly assigned).
+
 
 # Generates a random set of lists that represents people and their preferences
 # for items instead of using a sparsely populated matrix with mostly zeros.
@@ -16,15 +20,15 @@ def create_lists(num_people, num_items):
 	
 # Creates a random permutation of rows to simulate hash functions.
 # Note: List order matters
-def generate_row_permutation(num_perm, num_rows):
+def generate_row_permutation(num_perm, size_perm, num_items):
 	permutation_list = []
 	
 	# Creates a range of integers, fast and space efficient 
 	##### Use something else or hash functions?
-	population = xrange(num_rows)
+	population = xrange(num_items)
 
 	for i in range(num_perm):
-		permutation_list.append(random.sample(population, num_perm))		
+		permutation_list.append(random.sample(population, size_perm))		
 	return permutation_list	
 	
 # Generates a random matrix of size row x col of zeros with percentage of 

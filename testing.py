@@ -4,7 +4,9 @@ import random
 
 
 # Runs jaccard similarity on matrix for precise results.
-# Built to determine accuracy against minhash appromixations.	
+# Built to determine accuracy against minhash appromixations.
+# Returns a triangular matrix (which is created with an array of size n^2)
+# to hold the comparisons.
 def get_matrix_jaccard(matrix):
 	"""
 	We only need the upper half of a matrix to store all comparisons.
@@ -23,23 +25,32 @@ def get_matrix_jaccard(matrix):
 	Column comparison {i,j} with 0 <= i < j < n 
 	list[k] = i * (n - (1 + i) / 2) + (j + 1) - (i + 1) - 1
 	"""
-	
-	dim = matrix.shape
-	n = dim[1]
+	matrix_dimensions = matrix.shape
+	n = matrix_dimensions[1] # n = # of sets (or people)
 	
 	##### Better way to initialize?
-	jaccard_list = [0] * (n * (n - 1) / 2)
+	jaccard_list = [0] * (n * (n - 1) / 2) # n^2 
 
+        # To calculate Jaccard Sim between two sets (or people), we divide the
+        # intersection of the sets by the union. Repeat the process comparing
+        # each set to all other sets.
 	# Note: not very efficient comparison ~O(n^3)
 	for i in range(n):  
 		for j in range(i + 1, n): 
 			union, intersection = 0, 0
-			for row in range(0, dim[0]): 
-				if matrix[row][i] != 0 or matrix[row][j] != 0:
+			for row in range(0, matrix_dimensions[0]):
+                                # assignments aid readability
+                                x = matrix[row][i] 
+                                y = matrix[row][j]
+                                x_is_inf = np.isinf(x)
+                                y_is_inf = np.isinf(y)
+				if not x_is_inf or not y_is_inf:
 					union += 1
-					if matrix[row][i] != 0 and matrix[row][j] != 0:
-						intersection += 1
-			# Here's that crazy formula for indexing 
+                                        if not x_is_inf and not y_is_inf:
+                                                if x == y:
+						        intersection += 1
+			# Here's that crazy formula for indexing a triangular
+                        # matrix using an array.
 			k = int(i * (n - (1 + i) / 2.0) + (j + 1) - (i + 1) - 1)
 			if union != 0 and intersection != 0:
 				jaccard_list[k] = round((intersection / float(union)), 2)
@@ -47,7 +58,7 @@ def get_matrix_jaccard(matrix):
 	return jaccard_list
 	
 	
-# Determine exact jaccard simularity from list of user preferences
+# Determine exact jaccard simularity from list of sets (user preferences)
 def get_list_jaccard(data_list):
 	n = len(data_list)
 	jaccard_list = [0] * (n * (n - 1) / 2)
@@ -62,25 +73,44 @@ def get_list_jaccard(data_list):
 				
 	return jaccard_list			
 	
-	
-def minhash(the_list, permutation_list, num_rows):
-	num_people = len(the_list)
+
+# Since our goal is to compare sets (or people) to one another, we need an
+# efficient way to do so. Comparing millions of users with preferences from
+# millions of items is very expensive. Instead, we use minhashing as a way
+# of generating a signature about a set or user. A signature is an
+# approximation of the set which we can use to make accurate comparisons
+# between sets. Minhashing typically uses hash functions to create a random
+# permutation of the items. The value of the minhash is the first item that
+# matches the permutation list and the user's preference list. Every
+# permutation adds another value to the signature which increases the
+# accuracy to the original set. 
+
+
+def minhash(set_of_ratings, permutation_list, max_num_items):
+	num_people = len(set_of_ratings)
 	num_perms = len(permutation_list)
 	permutation_length = len(permutation_list[0])
 	
-	# Since we are using permutations to approximate our characteristic matrix 
-	# we can use a matrix instead of lists
+	# Since we are using a limited number of permutations to approximate
+        # the signature, using a matrix to store signatures is fine.
 	signature_matrix = np.zeros((num_perms, num_people))
-	signature_matrix.fill(num_rows + 1)
+        
+        # Since the ratings of people are stored by where rating occurs
+        # (item number), we fill the matrix with a number larger than any
+        # possible match.
+        ##### Perhaps use -1?
+        signature_matrix.fill(float('inf'))
 	
 	# Compare the lists
 	for i in range(num_people): # cycle thru sets
-		ratings = the_list[i]
+		ratings = set_of_ratings[i]
 		for j in range(num_perms): # cycle thru permutations to generate minhash
 			permutation = permutation_list[j]
 			for number in permutation:
 				if number in ratings:
-					# assign to matrix
+					# Find lowest number in the permutation
+                                        # that matches the users rating. That's
+                              #the minhash for that particular permutation and that person.
 					signature_matrix[j][i] = min(signature_matrix[j][i], number)
 					break
 	return signature_matrix	
