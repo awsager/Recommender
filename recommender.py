@@ -1,16 +1,18 @@
 import testing
 import generator
 
-num_people = 10
-num_items = 30
-num_permutations = 5
-size_of_permutation = 5
+# Various sizes of data set
+num_people = 50
+num_items = 200
+num_permutations = 20
+size_of_permutation = 20
 
 rating_list = generator.create_lists(num_people, num_items)
 permutation_list = generator.generate_row_permutation(num_permutations, size_of_permutation, num_items)
 signature_matrix = testing.minhash(rating_list, permutation_list, num_items)
 
 
+# Output information to file
 def write_results():
         fd = open("output.txt", 'w')
 	num_rating = len(rating_list)
@@ -37,25 +39,26 @@ def write_results():
                 fd.write("\n")
         
         jaccard_of_signature = testing.get_matrix_jaccard(signature_matrix)
-        x, y = 1, 2
-        #for number in range(size):
         fd.write("\n")
         fd.write("Jaccard sim of Minhash signature")
-        for sim in jaccard_of_signature:
-                fd.write("(%d,%d)=%s " % (x,y,(str(sim))))
-                y += 1
-                if y > num_people:
-                        fd.write("\n")
-                        x += 1
-                        y = x + 1
-                        if x == num_people:
-                                break
-
+        fd.write("\n")
+        write_triangular_matrix(jaccard_of_signature, fd)
         fd.write("Actual Jaccard simularity")
+        fd.write("\n")
         actual_jaccard = testing.get_list_jaccard(rating_list)
+        write_triangular_matrix(actual_jaccard, fd)
+        fd.write("Comparison of Jaccard sim:")
+        fd.write("\n")
+        write_triangular_matrix((generator.compare_jaccard(actual_jaccard, jaccard_of_signature)), fd)        
+        fd.close()
+        
+
+# Method to write out our triangular matrix with set comparisons
+# (x,y) = comparison between two people. Higher the number the higher the simularity
+def write_triangular_matrix(tri_array, fd):
         x, y = 1, 2
-        for sim in actual_jaccard:
-                fd.write("(%d,%d)=%s " % (x,y,(str(sim))))
+        for value in tri_array:
+                fd.write("(%d,%d)=%s " % (x,y,(str(value))))
                 y += 1
                 if y > num_people:
                         fd.write("\n")
@@ -63,7 +66,6 @@ def write_results():
                         y = x + 1
                         if x == num_people:
                                 break
-        fd.close()
 
         
 write_results()

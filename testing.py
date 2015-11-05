@@ -7,6 +7,7 @@ import random
 # Built to determine accuracy against minhash appromixations.
 # Returns a triangular matrix (which is created with an array of size n^2)
 # to hold the comparisons.
+
 def get_matrix_jaccard(matrix):
 	"""
 	We only need the upper half of a matrix to store all comparisons.
@@ -25,8 +26,9 @@ def get_matrix_jaccard(matrix):
 	Column comparison {i,j} with 0 <= i < j < n 
 	list[k] = i * (n - (1 + i) / 2) + (j + 1) - (i + 1) - 1
 	"""
+        
 	matrix_dimensions = matrix.shape
-	n = matrix_dimensions[1] # n = # of sets (or people)
+	n = matrix_dimensions[1] # n = number of sets (or people)
 	
 	##### Better way to initialize?
 	jaccard_list = [0] * (n * (n - 1) / 2) # n^2 
@@ -42,6 +44,10 @@ def get_matrix_jaccard(matrix):
                                 # assignments aid readability
                                 x = matrix[row][i] 
                                 y = matrix[row][j]
+
+                                # infinity = no minhash value (permutation did not match
+                                # person's ranking, aka not enough info to determine
+                                # that part of signature), we ignore
                                 x_is_inf = np.isinf(x)
                                 y_is_inf = np.isinf(y)
 				if not x_is_inf or not y_is_inf:
@@ -58,7 +64,11 @@ def get_matrix_jaccard(matrix):
 	return jaccard_list
 	
 	
-# Determine exact jaccard simularity from list of sets (user preferences)
+# Similar to above method, but instead of a matrix as input
+# it takes a triangular matrix represented by an array. Again
+# determining jaccard similarity between all sets by dividing
+# the intersection by the union of the sets being evaluated.
+
 def get_list_jaccard(data_list):
 	n = len(data_list)
 	jaccard_list = [0] * (n * (n - 1) / 2)
@@ -95,10 +105,9 @@ def minhash(set_of_ratings, permutation_list, max_num_items):
         # the signature, using a matrix to store signatures is fine.
 	signature_matrix = np.zeros((num_perms, num_people))
         
-        # Since the ratings of people are stored by where rating occurs
-        # (item number), we fill the matrix with a number larger than any
-        # possible match.
-        ##### Perhaps use -1?
+        # Since the ratings of people are stored only as the items they rank,
+        # we fill the matrix with infinite value
+        
         signature_matrix.fill(float('inf'))
 	
 	# Compare the lists
