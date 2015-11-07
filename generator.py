@@ -53,22 +53,3 @@ def create_matrix(row, col):
 				matrix[x][y] = 1
 				break
 	return matrix
-
-
-# Compare actual jaccard to jaccard based on signature
-def compare_jaccard(actual_jaccard, sig_jaccard):
-
-        # should be size, just in case
-        size = min(len(actual_jaccard), len(sig_jaccard))
-        difference = []
-
-        # evaluate difference between the arrays with the exception of zero
-        for i in range(size):
-                if actual_jaccard[i] == 0 and sig_jaccard[i] == 0:
-                        difference.append("X.X") # no match possible
-                else:
-                        difference.append(actual_jaccard[i] - sig_jaccard[i])
-        return difference
-                        
-                        
-
